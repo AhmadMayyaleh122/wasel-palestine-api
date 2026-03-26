@@ -1,0 +1,397 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  citizen
+  moderator
+  admin
+}
+
+enum CheckpointStatus {
+  open
+  delayed
+  partially_closed
+  closed
+  unknown
+}
+
+enum IncidentSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum IncidentStatus {
+  reported
+  verified
+  monitoring
+  resolved
+  closed
+  rejected
+}
+
+enum SourceType {
+  crowd
+  moderator
+  external_api
+  system
+}
+
+enum ReportStatus {
+  submitted
+  under_review
+  verified
+  rejected
+  merged
+  spam
+}
+
+enum VoteType {
+  confirm
+  deny
+}
+
+enum AlertChannel {
+  in_app
+  email
+  sms_stub
+}
+
+enum AlertStatus {
+  pending
+  generated
+  sent
+  failed
+  read
+}
+
+enum FactorType {
+  incident
+  checkpoint_status
+  weather
+  area_restriction
+  congestion
+  provider_penalty
+  user_constraint
+}
+
+enum AreaType {
+  city
+  district
+  checkpoint_buffer
+  route_corridor
+  custom
+}
+
+enum ValidationCheckType {
+  duplicate_proximity
+  duplicate_temporal
+  location_precision
+  text_quality
+  reporter_reputation
+  anomaly_score
+}
+
+enum ValidationOutcome {
+  pass
+  warn
+  fail
+}
+
+enum ModerationActionType {
+  review_started
+  verify_report
+  reject_report
+  merge_report
+  flag_duplicate
+  create_incident
+  verify_incident
+  close_incident
+  reopen_incident
+  update_checkpoint_status
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  fullName     String   @map("full_name")
+  phone        String?
+  role         Role     @default(citizen)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens           RefreshToken[]
+  checkpointStatusChanges CheckpointStatusHistory[]
+  createdIncidents        Incident[]
+  submittedReports        Report[]
+  reportVotes             ReportVote[]
+  alertSubscriptions      AlertSubscription[]
+  moderationActions       ModerationAction[]
+  routeEstimations        RouteEstimation[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  userAgent String?   @map("user_agent")
+  ipAddress String?   @map("ip_address")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model IncidentCategory {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique
+  label       String
+  description String?
+  isActive    Boolean @default(true) @map("is_active")
+
+  incidents          Incident[]
+  reports            Report[]
+  alertSubscriptions AlertSubscription[]
+
+  @@map("incident_categories")
+}
+
+model Geofence {
+  id           String   @id @default(uuid())
+  name         String
+  areaType     AreaType @map("area_type")
+  boundaryJson Json     @map("boundary_json")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  checkpoints        Checkpoint[]
+  alertSubscriptions AlertSubscription[]
+
+  @@map("geofences")
+}
+
+model Checkpoint {
+  id            String           @id @default(uuid())
+  areaId        String?          @map("area_id")
+  name          String
+  externalCode  String?          @unique @map("external_code")
+  latitude      Decimal          @db.Decimal(10, 7)
+  longitude     Decimal          @db.Decimal(10, 7)
+  addressText   String           @map("address_text")
+  directionHint String?          @map("direction_hint")
+  currentStatus CheckpointStatus @default(unknown) @map("current_status")
+  isActive      Boolean          @default(true) @map("is_active")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  area              Geofence?                 @relation(fields: [areaId], references: [id], onDelete: SetNull)
+  statusHistory     CheckpointStatusHistory[]
+  incidents         Incident[]
+  moderationActions ModerationAction[]
+
+  @@map("checkpoints")
+}
+
+model CheckpointStatusHistory {
+  id              Int              @id @default(autoincrement())
+  checkpointId    String           @map("checkpoint_id")
+  status          CheckpointStatus
+  notes           String?
+  changedByUserId String?          @map("changed_by_user_id")
+  changedAt       DateTime         @default(now()) @map("changed_at")
+
+  checkpoint Checkpoint @relation(fields: [checkpointId], references: [id], onDelete: Cascade)
+  changedBy  User?      @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("checkpoint_status_history")
+}
+
+model Incident {
+  id              String           @id @default(uuid())
+  checkpointId    String?          @map("checkpoint_id")
+  categoryId      Int              @map("category_id")
+  createdByUserId String?          @map("created_by_user_id")
+  title           String
+  description     String
+  severity        IncidentSeverity @default(medium)
+  status          IncidentStatus   @default(reported)
+  sourceType      SourceType       @default(crowd) @map("source_type")
+  latitude        Decimal          @db.Decimal(10, 7)
+  longitude       Decimal          @db.Decimal(10, 7)
+  startsAt        DateTime         @default(now()) @map("starts_at")
+  endsAt          DateTime?        @map("ends_at")
+  verifiedAt      DateTime?        @map("verified_at")
+  closedAt        DateTime?        @map("closed_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  checkpoint        Checkpoint?        @relation(fields: [checkpointId], references: [id], onDelete: SetNull)
+  category          IncidentCategory   @relation(fields: [categoryId], references: [id])
+  createdBy         User?              @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  alertRecords      AlertRecord[]
+  moderationActions ModerationAction[]
+
+  @@map("incidents")
+}
+
+model Report {
+  id                  String       @id @default(uuid())
+  submittedByUserId   String       @map("submitted_by_user_id")
+  categoryId          Int          @map("category_id")
+  linkedIncidentId    String?      @map("linked_incident_id")
+  duplicateOfReportId String?      @map("duplicate_of_report_id")
+  description         String
+  latitude            Decimal      @db.Decimal(10, 7)
+  longitude           Decimal      @db.Decimal(10, 7)
+  status              ReportStatus @default(submitted)
+  sourceType          SourceType   @default(crowd) @map("source_type")
+  trustScore          Decimal      @default(0) @db.Decimal(5, 2) @map("trust_score")
+  submittedAt         DateTime     @default(now()) @map("submitted_at")
+  reviewedAt          DateTime?    @map("reviewed_at")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  submittedBy      User                    @relation(fields: [submittedByUserId], references: [id])
+  category         IncidentCategory        @relation(fields: [categoryId], references: [id])
+  duplicateOf      Report?                 @relation("DuplicateReports", fields: [duplicateOfReportId], references: [id], onDelete: SetNull)
+  duplicates       Report[]                @relation("DuplicateReports")
+  votes            ReportVote[]
+  validationChecks ReportValidationCheck[]
+  moderationActions ModerationAction[]
+
+  @@map("reports")
+}
+
+model ReportVote {
+  id        Int      @id @default(autoincrement())
+  reportId  String   @map("report_id")
+  userId    String   @map("user_id")
+  voteType  VoteType @map("vote_type")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, userId])
+  @@map("report_votes")
+}
+
+model ReportValidationCheck {
+  id        Int                 @id @default(autoincrement())
+  reportId  String              @map("report_id")
+  checkType ValidationCheckType @map("check_type")
+  outcome   ValidationOutcome
+  score     Decimal?            @db.Decimal(5, 2)
+  notes     String?
+  createdAt DateTime            @default(now()) @map("created_at")
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("report_validation_checks")
+}
+
+model ModerationAction {
+  id           Int                  @id @default(autoincrement())
+  reportId     String?              @map("report_id")
+  incidentId   String?              @map("incident_id")
+  checkpointId String?              @map("checkpoint_id")
+  actorUserId  String               @map("actor_user_id")
+  actionType   ModerationActionType @map("action_type")
+  notes        String?
+  createdAt    DateTime             @default(now()) @map("created_at")
+
+  report     Report?     @relation(fields: [reportId], references: [id], onDelete: SetNull)
+  incident   Incident?   @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+  checkpoint Checkpoint? @relation(fields: [checkpointId], references: [id], onDelete: SetNull)
+  actor      User        @relation(fields: [actorUserId], references: [id])
+
+  @@map("moderation_actions")
+}
+
+model AlertSubscription {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  geofenceId String?      @map("geofence_id")
+  categoryId Int?         @map("category_id")
+  channel    AlertChannel @default(in_app)
+  isActive   Boolean      @default(true) @map("is_active")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  geofence Geofence?         @relation(fields: [geofenceId], references: [id], onDelete: SetNull)
+  category IncidentCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  alerts   AlertRecord[]
+
+  @@map("alert_subscriptions")
+}
+
+model AlertRecord {
+  id             String      @id @default(uuid())
+  subscriptionId String      @map("subscription_id")
+  incidentId     String?     @map("incident_id")
+  title          String
+  message        String
+  status         AlertStatus @default(generated)
+  deliveredAt    DateTime?   @map("delivered_at")
+  readAt         DateTime?   @map("read_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  subscription AlertSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  incident     Incident?         @relation(fields: [incidentId], references: [id], onDelete: SetNull)
+
+  @@map("alert_records")
+}
+
+model RouteEstimation {
+  id                      String   @id @default(uuid())
+  userId                  String?  @map("user_id")
+  originName              String?  @map("origin_name")
+  originLatitude          Decimal  @db.Decimal(10, 7) @map("origin_latitude")
+  originLongitude         Decimal  @db.Decimal(10, 7) @map("origin_longitude")
+  destinationName         String?  @map("destination_name")
+  destinationLatitude     Decimal  @db.Decimal(10, 7) @map("destination_latitude")
+  destinationLongitude    Decimal  @db.Decimal(10, 7) @map("destination_longitude")
+  baseDistanceKm          Decimal? @db.Decimal(10, 2) @map("base_distance_km")
+  adjustedDistanceKm      Decimal? @db.Decimal(10, 2) @map("adjusted_distance_km")
+  baseDurationMinutes     Int?     @map("base_duration_minutes")
+  adjustedDurationMinutes Int?     @map("adjusted_duration_minutes")
+  riskScore               Decimal  @default(0) @db.Decimal(5, 2) @map("risk_score")
+  providerName            String?  @map("provider_name")
+  routeSummary            Json?    @map("route_summary")
+  createdAt               DateTime @default(now()) @map("created_at")
+
+  user    User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  factors RouteFactors[]
+
+  @@map("route_estimations")
+}
+
+model RouteFactors {
+  id                Int        @id @default(autoincrement())
+  routeEstimationId String     @map("route_estimation_id")
+  factorType        FactorType @map("factor_type")
+  referenceId       String?    @map("reference_id")
+  weightValue       Decimal    @default(0) @db.Decimal(8, 2) @map("weight_value")
+  description       String?
+  createdAt         DateTime   @default(now()) @map("created_at")
+
+  routeEstimation RouteEstimation @relation(fields: [routeEstimationId], references: [id], onDelete: Cascade)
+
+  @@map("route_factors")
+}
