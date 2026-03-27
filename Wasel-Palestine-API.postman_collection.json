@@ -1,26 +1,25 @@
 {
   "info": {
-    "name": "Wasel Palestine API - Auth System",
-    "description": "Complete authentication system with JWT tokens",
+    "name": "Wasel Palestine API",
+    "description": "Smart Mobility & Checkpoint Intelligence Platform",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "🔐 Authentication",
+      "name": "Authentication",
       "item": [
         {
-          "name": "1. Register (New User)",
+          "name": "Register",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const response = pm.response.json();",
+                  "var response = pm.response.json();",
                   "if (response.data && response.data.accessToken) {",
                   "  pm.environment.set('accessToken', response.data.accessToken);",
                   "  pm.environment.set('refreshToken', response.data.refreshToken);",
                   "  pm.environment.set('userId', response.data.user.id);",
-                  "  console.log('✅ Tokens saved to environment');",
                   "}"
                 ]
               }
@@ -36,29 +35,36 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test3@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Test User\",\n  \"phone\": \"+20123456789\"\n}"
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Test User\",\n  \"phone\": \"+1234567890\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["register"]
-            },
-            "description": "Register a new user account"
+              "raw": "http://localhost:3000/api/v1/auth/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            }
           },
           "response": []
         },
         {
-          "name": "2. Login",
+          "name": "Login",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const response = pm.response.json();",
+                  "var response = pm.response.json();",
                   "if (response.data && response.data.accessToken) {",
                   "  pm.environment.set('accessToken', response.data.accessToken);",
                   "  pm.environment.set('refreshToken', response.data.refreshToken);",
-                  "  console.log('✅ New tokens saved');",
                   "}"
                 ]
               }
@@ -74,19 +80,27 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test3@example.com\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["login"]
-            },
-            "description": "Login with email and password"
+              "raw": "http://localhost:3000/api/v1/auth/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            }
           },
           "response": []
         },
         {
-          "name": "3. Get Current User (/me)",
+          "name": "GET - Current User",
           "request": {
             "method": "GET",
             "header": [
@@ -96,25 +110,32 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["me"]
-            },
-            "description": "Get current authenticated user info"
+              "raw": "http://localhost:3000/api/v1/auth/me",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
+            }
           },
           "response": []
         },
         {
-          "name": "4. Refresh Access Token",
+          "name": "POST - Refresh Token",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const response = pm.response.json();",
+                  "var response = pm.response.json();",
                   "if (response.data && response.data.accessToken) {",
                   "  pm.environment.set('accessToken', response.data.accessToken);",
-                  "  console.log('✅ New access token generated');",
                   "}"
                 ]
               }
@@ -133,26 +154,34 @@
               "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["refresh"]
-            },
-            "description": "Refresh expired access token using refresh token"
+              "raw": "http://localhost:3000/api/v1/auth/refresh",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            }
           },
           "response": []
         },
         {
-          "name": "5. Logout",
+          "name": "POST - Logout",
           "request": {
             "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
                 "key": "Authorization",
                 "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
             "body": {
@@ -160,22 +189,121 @@
               "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["logout"]
-            },
-            "description": "Logout and revoke tokens"
+              "raw": "http://localhost:3000/api/v1/auth/logout",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            }
           },
           "response": []
         }
-      ],
-      "description": "JWT-based authentication endpoints"
+      ]
     },
     {
-      "name": "🚀 Other Features (Coming Soon)",
+      "name": "Checkpoints",
       "item": [
         {
-          "name": "Create Checkpoint",
+          "name": "LIST - All Checkpoints",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints?page=1&limit=20",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Single Checkpoint",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints",
+                "{{checkpointId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Status History",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}/status-history?limit=50",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints",
+                "{{checkpointId}}",
+                "status-history"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CREATE - New Checkpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var response = pm.response.json();",
+                  "if (response.data && response.data.id) {",
+                  "  pm.environment.set('checkpointId', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -190,12 +318,359 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Checkpoint Name\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.9284,\n  \"status\": \"open\"\n}"
+              "raw": "{\n  \"fullName\": \"Test Checkpoint\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028,\n  \"addressText\": \"Test Road\",\n  \"directionHint\": \"North\",\n  \"currentStatus\": \"open\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/checkpoints",
-              "host": ["{{baseUrl}}"],
-              "path": ["checkpoints"]
+              "raw": "http://localhost:3000/api/v1/checkpoints",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE - Checkpoint Details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Checkpoint\",\n  \"addressText\": \"Updated Road\",\n  \"directionHint\": \"Northeast\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints",
+                "{{checkpointId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE - Checkpoint Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"delayed\",\n  \"notes\": \"Heavy traffic\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints",
+                "{{checkpointId}}",
+                "status"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE - Deactivate Checkpoint",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "checkpoints",
+                "{{checkpointId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Incidents",
+      "item": [
+        {
+          "name": "LIST - All Incidents",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents?page=1&limit=20&status=reported",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "reported"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "LIST - High Severity Incidents",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents/high-severity?limit=50",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents",
+                "high-severity"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - Single Incident",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CREATE - New Incident",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var response = pm.response.json();",
+                  "if (response.data && response.data.id) {",
+                  "  pm.environment.set('incidentId', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Traffic Jam at Main Road\",\n  \"description\": \"Heavy traffic causing 30 min delay\",\n  \"categoryId\": 1,\n  \"checkpointId\": \"{{checkpointId}}\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028,\n  \"severity\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "UPDATE - Incident Details",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated incident description\",\n  \"severity\": \"critical\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents",
+                "{{incidentId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "VERIFY - Mark Incident as Verified",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Verified incident condition\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}/verify",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents",
+                "{{incidentId}}",
+                "verify"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CLOSE - Mark Incident as Closed",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Issue resolved\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}/close",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "v1",
+                "incidents",
+                "{{incidentId}}",
+                "close"
+              ]
             }
           },
           "response": []
@@ -205,24 +680,16 @@
   ],
   "variable": [
     {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1/auth",
-      "type": "string"
-    },
-    {
       "key": "accessToken",
-      "value": "",
-      "type": "string"
+      "value": ""
     },
     {
-      "key": "refreshToken",
-      "value": "",
-      "type": "string"
+      "key": "checkpointId",
+      "value": ""
     },
     {
-      "key": "userId",
-      "value": "",
-      "type": "string"
+      "key": "incidentId",
+      "value": ""
     }
   ]
 }

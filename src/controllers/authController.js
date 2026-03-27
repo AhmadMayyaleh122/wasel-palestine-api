@@ -132,7 +132,7 @@ return res.status(401).json({
 // Get current user profile
 const getCurrentUser =async (req,res) => {
 try{
-  const userId=req.user.userId;
+  const userId=req.user.id;
   const result = await authService.getCurrentUser(userId);
   res.status(200).json({
     status:'success',
@@ -155,7 +155,7 @@ try{
 const logout =async (req,res) =>{
 
   try{
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const refreshToken = req.body.refreshToken;
     await authService.logout(userId,refreshToken);
 
