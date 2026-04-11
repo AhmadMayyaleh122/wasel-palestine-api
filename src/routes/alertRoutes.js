@@ -6,5 +6,5 @@ const router = express.Router();
 
 router.post('/subscriptions', authMiddleware, alertController.createSubscription);
 router.get('/subscriptions', authMiddleware, alertController.getMySubscriptions);
-
+////
 module.exports = router;
