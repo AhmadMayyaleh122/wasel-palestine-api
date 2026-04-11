@@ -5,6 +5,8 @@ const authRoutes = require('./routes/authRoutes');
 const checkpointRoutes = require('./routes/checkpointRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const routeEstimationRoutes = require('./routes/routeEstimationRoutes');
+const alertRoutes = require('./routes/alertRoutes');
 
 const app = express();
 
@@ -28,6 +30,12 @@ app.use('/api/v1/incidents', incidentRoutes);
 
 // Report routes
 app.use('/api/v1/reports', reportRoutes);
+
+// Route estimation routes
+app.use('/api/v1/routes', routeEstimationRoutes);
+
+// Alert routes
+app.use('/api/v1/alerts', alertRoutes);
 
 // 404 handler
 app.use((req, res) => {
