@@ -4,12 +4,20 @@ const helmet = require('helmet');
 const authRoutes = require('./routes/authRoutes');
 const checkpointRoutes = require('./routes/checkpointRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+const routeEstimationRoutes = require('./routes/routeEstimationRoutes');
+const alertRoutes = require('./routes/alertRoutes');
+
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+
+app.use('/api/v1/reports', reportRoutes);
+app.use('/api/v1/routes', routeEstimationRoutes);
+app.use('/api/v1/alerts', alertRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {
