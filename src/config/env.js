@@ -26,6 +26,17 @@ function validateDatabaseUrl(databaseUrl) {
   }
 }
 
+function getDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (typeof databaseUrl !== 'string' || databaseUrl.trim() === '') {
+    throw new Error('Missing required environment variable: DATABASE_URL');
+  }
+
+  validateDatabaseUrl(databaseUrl);
+  return databaseUrl;
+}
+
 function validateEnv() {
   const missingVars = getMissingEnvVars();
 
@@ -37,5 +48,7 @@ function validateEnv() {
 }
 
 module.exports = {
+  getDatabaseUrl,
   validateEnv,
+  validateDatabaseUrl,
 };
