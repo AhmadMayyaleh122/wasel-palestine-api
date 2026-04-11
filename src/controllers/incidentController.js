@@ -79,7 +79,7 @@ class IncidentController {
 
   /**
    * POST /api/v1/incidents
-   * Create new incident
+   * Create new incident (authenticated crowdsourced reporting)
    */
   async createIncident(req, res) {
     try {
@@ -130,7 +130,7 @@ class IncidentController {
       const { id } = req.params;
       const { status, notes } = req.body;
 
-      const result = await incidentService.updateIncidentStatus(id, status, req.user.id, req.user.role, notes);
+      const result = await incidentService.updateIncidentStatus(id, status, req.user.id, notes);
 
       if (!result.success) {
         return res.status(400).json({
@@ -162,18 +162,14 @@ class IncidentController {
       const { id } = req.params;
       const { title, description, severity, latitude, longitude, checkpointId } = req.body;
 
-      const result = await incidentService.updateIncidentDetails(
-        id,
-        {
-          title,
-          description,
-          severity,
-          latitude,
-          longitude,
-          checkpointId,
-        },
-        req.user.role
-      );
+      const result = await incidentService.updateIncidentDetails(id, {
+        title,
+        description,
+        severity,
+        latitude,
+        longitude,
+        checkpointId,
+      });
 
       if (!result.success) {
         return res.status(400).json({
@@ -205,7 +201,7 @@ class IncidentController {
       const { id } = req.params;
       const { notes } = req.body;
 
-      const result = await incidentService.verifyIncident(id, req.user.id, req.user.role, notes);
+      const result = await incidentService.verifyIncident(id, req.user.id, notes);
 
       if (!result.success) {
         return res.status(400).json({
@@ -237,7 +233,7 @@ class IncidentController {
       const { id } = req.params;
       const { notes } = req.body;
 
-      const result = await incidentService.closeIncident(id, req.user.id, req.user.role, notes);
+      const result = await incidentService.closeIncident(id, req.user.id, notes);
 
       if (!result.success) {
         return res.status(400).json({
@@ -348,6 +344,37 @@ class IncidentController {
       });
     } catch (error) {
       console.error('Error fetching high severity incidents:', error);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  /**
+   * DELETE /api/v1/incidents/:id
+   * Delete incident
+   */
+  async deleteIncident(req, res) {
+    try {
+      const { id } = req.params;
+
+      const result = await incidentService.deleteIncident(id);
+
+      if (!result.success) {
+        return res.status(400).json({
+          status: 'error',
+          message: result.error,
+        });
+      }
+
+      return res.status(200).json({
+        status: 'success',
+        message: result.message,
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error deleting incident:', error);
       return res.status(500).json({
         status: 'error',
         message: 'Internal server error',

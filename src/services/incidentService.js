@@ -1,4 +1,4 @@
-const incidentRepository = require('../db/repositories/incidentRepository');
+const incidentRepository = require('../repositories/incidentRepository');
 const { getPrismaClient } = require('../prisma/prismaClient');
 
 class IncidentService {
@@ -56,7 +56,7 @@ class IncidentService {
   }
 
   /**
-   * Create new incident
+   * Create new incident and derive source metadata from the caller role
    */
   async createIncident(data, userId, userRole) {
     try {
@@ -135,15 +135,10 @@ class IncidentService {
   }
 
   /**
-   * Update incident status (moderator/admin only)
+   * Update incident status
    */
-  async updateIncidentStatus(incidentId, newStatus, userId, userRole, notes = null) {
+  async updateIncidentStatus(incidentId, newStatus, userId, notes = null) {
     try {
-      // Authorization check
-      if (!['admin', 'moderator'].includes(userRole)) {
-        throw new Error('Only admins and moderators can update incident status');
-      }
-
       if (!incidentId) {
         throw new Error('Incident ID is required');
       }
@@ -181,15 +176,10 @@ class IncidentService {
   }
 
   /**
-   * Verify incident (moderator/admin only)
+   * Verify incident
    */
-  async verifyIncident(incidentId, userId, userRole, notes = null) {
+  async verifyIncident(incidentId, userId, notes = null) {
     try {
-      // Authorization check
-      if (!['admin', 'moderator'].includes(userRole)) {
-        throw new Error('Only admins and moderators can verify incidents');
-      }
-
       if (!incidentId) {
         throw new Error('Incident ID is required');
       }
@@ -213,15 +203,10 @@ class IncidentService {
   }
 
   /**
-   * Close incident (moderator/admin only)
+   * Close incident
    */
-  async closeIncident(incidentId, userId, userRole, notes = null) {
+  async closeIncident(incidentId, userId, notes = null) {
     try {
-      // Authorization check
-      if (!['admin', 'moderator'].includes(userRole)) {
-        throw new Error('Only admins and moderators can close incidents');
-      }
-
       if (!incidentId) {
         throw new Error('Incident ID is required');
       }
@@ -307,15 +292,10 @@ class IncidentService {
   }
 
   /**
-   * Update incident details (moderator/admin only)
+   * Update incident details
    */
-  async updateIncidentDetails(incidentId, data, userRole) {
+  async updateIncidentDetails(incidentId, data) {
     try {
-      // Authorization check
-      if (!['admin', 'moderator'].includes(userRole)) {
-        throw new Error('Only admins and moderators can update incidents');
-      }
-
       if (!incidentId) {
         throw new Error('Incident ID is required');
       }
@@ -349,6 +329,33 @@ class IncidentService {
       return {
         success: true,
         message: 'Incident updated successfully',
+        data: incident,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+
+  /**
+   * Delete incident
+   */
+  async deleteIncident(incidentId) {
+    try {
+      if (!incidentId) {
+        throw new Error('Incident ID is required');
+      }
+
+      // Verify incident exists
+      await incidentRepository.getIncidentById(incidentId);
+
+      const incident = await incidentRepository.deleteIncident(incidentId);
+
+      return {
+        success: true,
+        message: 'Incident deleted successfully',
         data: incident,
       };
     } catch (error) {

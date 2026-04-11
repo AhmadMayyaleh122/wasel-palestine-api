@@ -1,8 +1,9 @@
 const express = require('express');
 const incidentController = require('../controllers/incidentController');
-const { authMiddleware } = require('../middlewares/authMiddleware');
+const { authMiddleware, roleMiddleware } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
+const incidentStaffRoles = ['admin', 'moderator'];
 
 /**
  * Incident Routes
@@ -14,14 +15,20 @@ router.get('/', incidentController.getAllIncidents);
 router.get('/high-severity', incidentController.getHighSeverityIncidents);
 router.get('/:id', incidentController.getIncidentById);
 
-// Protected routes (auth required)
+// Crowdsourced reporting: any authenticated user can submit an incident.
 router.post('/', authMiddleware, incidentController.createIncident);
-router.put('/:id', authMiddleware, incidentController.updateIncidentDetails);
-router.put('/:id/status', authMiddleware, incidentController.updateIncidentStatus);
+router.put('/:id', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.updateIncidentDetails);
+router.put(
+  '/:id/status',
+  authMiddleware,
+  roleMiddleware(incidentStaffRoles),
+  incidentController.updateIncidentStatus
+);
+router.delete('/:id', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.deleteIncident);
 
 // Moderated actions (admin/moderator only)
-router.post('/:id/verify', authMiddleware, incidentController.verifyIncident);
-router.post('/:id/close', authMiddleware, incidentController.closeIncident);
+router.post('/:id/verify', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.verifyIncident);
+router.post('/:id/close', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.closeIncident);
 
 // Filter routes
 router.get('/checkpoints/:checkpointId/incidents', incidentController.getIncidentsByCheckpoint);
