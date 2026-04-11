@@ -1061,7 +1061,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"categoryId\": {{categoryId}},\n  \"description\": \"Crowdsourced report for testing report flow\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028\n}"
+              "raw": "{\n  \"location\": \"Test Location\",\n  \"categoryId\": {{categoryId}},\n  \"description\": \"Crowdsourced report for testing report flow\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028\n}"
             },
             "url": {
               "raw": "http://localhost:3000/api/v1/reports",
