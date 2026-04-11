@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.post('/subscriptions', authMiddleware, alertController.createSubscription);
 router.get('/subscriptions', authMiddleware, alertController.getMySubscriptions);
-
+router.delete('/subscriptions/:id', authMiddleware, alertController.deleteSubscription);
+//hi 
 module.exports = router;
