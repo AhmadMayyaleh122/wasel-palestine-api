@@ -1030,6 +1030,81 @@
       "name": "Reports",
       "item": [
         {
+          "name": "GET - Get report by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/reports/{{reportId}}",
+              "host": [
+                "localhost"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports",
+                "{{reportId}}"
+              ],
+              "protocol": "http",
+              "port": "3000"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET - List All Reports",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('List all reports returns success', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:3000/api/v1/reports?page=1&limit=20",
+              "host": [
+                "localhost"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ],
+              "protocol": "http",
+              "port": "3000"
+            }
+          },
+          "response": []
+        },
+        {
           "name": "POST - Create Report",
           "event": [
             {
