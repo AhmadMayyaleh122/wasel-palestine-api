@@ -206,6 +206,42 @@ class ReportService {
       };
     }
   }
+  async getAllReports() {
+    try {
+      const reports = await reportRepository.getAllReports();
+
+      return {
+        success: true,
+        data: reports,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+  }
+  async getReportById(reportId) {
+    try {
+      if (!reportId) {
+        throw new Error('Report ID is required');
+      }
+      const report = await reportRepository.getReportById(reportId);
+
+      if (!report) {
+        throw new Error('Report not found');
+      } 
+      return {
+        success: true,
+        data: report,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message,
+      };
+    } 
+  }
 }
 
 module.exports = new ReportService();
