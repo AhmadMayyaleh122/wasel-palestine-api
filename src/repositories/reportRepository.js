@@ -214,6 +214,35 @@ class ReportRepository {
       throw new Error(`Failed to create moderation action: ${error.message}`);
     }
   }
+  async getAllReports() {
+    const prisma = getPrismaClient();
+
+    try {
+      return await prisma.report.findMany({
+        include: {
+          submittedBy: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              role: true,
+            },
+          },
+          category: true,
+          duplicateOf: {
+            select: {
+              id: true,
+              description: true,
+              submittedAt: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to fetch all reports: ${error.message}`);
+    }
+  }
+
 }
 
 module.exports = new ReportRepository();

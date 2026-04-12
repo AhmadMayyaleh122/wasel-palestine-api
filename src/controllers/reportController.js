@@ -97,6 +97,50 @@ class ReportController {
       });
     }
   }
+  async getAllReports(req,res) {
+    try {
+      const result = await reportService.getAllReports();
+      if(!result.success){
+        return res.status(400).json({
+          status: 'error',
+          message: result.error,
+        }); 
+      }
+      return res.status(200).json({
+        status: 'success',
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+  async getReportById(req,res) {
+    try {
+      const { id } = req.params;
+      const result = await reportService.getReportById(id); 
+      if(!result.success){
+        return res.status(400).json({
+          status: 'error',
+          message: result.error,
+        }); 
+      }
+      return res.status(200).json({
+        status: 'success',
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error fetching report:', error);
+      return res.status(500).json({
+        status: 'error',
+        message: 'Internal server error',
+      });
+    }
+  }
+  
 }
 
 module.exports = new ReportController();
