@@ -206,19 +206,14 @@ class ReportService {
       };
     }
   }
-  async getAllReports() {
+  async getAllReports({ page, limit, status } = {}) {
     try {
-      const reports = await reportRepository.getAllReports();
-
-      return {
-        success: true,
-        data: reports,
-      };
+      const parsedPage = Math.max(1, parseInt(page) || 1);
+      const parsedLimit = Math.min(100, Math.max(1, parseInt(limit) || 20));
+      const result = await reportRepository.getAllReports({ page: parsedPage, limit: parsedLimit, status });
+      return { success: true, data: result };
     } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-      };
+      return { success: false, error: error.message };
     }
   }
   async getReportById(reportId) {

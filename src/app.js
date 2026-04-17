@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const checkpointRoutes = require('./routes/checkpointRoutes');
 const incidentRoutes = require('./routes/incidentRoutes');
@@ -8,12 +9,31 @@ const reportRoutes = require('./routes/reportRoutes');
 const routeEstimationRoutes = require('./routes/routeEstimationRoutes');
 const alertRoutes = require('./routes/alertRoutes');
 
-
 const app = express();
+
+const rateLimitDefaults = {
+  windowMs: 15 * 60 * 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+};
+
+const globalLimiter = rateLimit({
+  ...rateLimitDefaults,
+  max: 200,
+  skip: (req) => req.path.startsWith('/api/v1/auth'),
+  message: { status: 'error', message: 'Too many requests, please try again later.' },
+});
+
+const authLimiter = rateLimit({
+  ...rateLimitDefaults,
+  max: 20,
+  message: { status: 'error', message: 'Too many auth attempts, please try again later.' },
+});
 
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
+app.use(globalLimiter);
 
 app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/routes', routeEstimationRoutes);
@@ -25,7 +45,7 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // Auth routes
-app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', authLimiter, authRoutes);
 
 // Checkpoint routes
 app.use('/api/v1/checkpoints', checkpointRoutes);
