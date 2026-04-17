@@ -12,6 +12,7 @@ const incidentStaffRoles = ['admin', 'moderator'];
 
 // Public routes (anyone can read)
 router.get('/', incidentController.getAllIncidents);
+router.get('/stats', incidentController.getIncidentStats);
 router.get('/high-severity', incidentController.getHighSeverityIncidents);
 router.get('/:id', incidentController.getIncidentById);
 
@@ -31,7 +32,7 @@ router.post('/:id/verify', authMiddleware, roleMiddleware(incidentStaffRoles), i
 router.post('/:id/close', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.closeIncident);
 
 // Filter routes
-router.get('/checkpoints/:checkpointId/incidents', incidentController.getIncidentsByCheckpoint);
-router.get('/categories/:categoryId/incidents', incidentController.getIncidentsByCategory);
+router.get('/by-checkpoint/:checkpointId', incidentController.getIncidentsByCheckpoint);
+router.get('/by-category/:categoryId', incidentController.getIncidentsByCategory);
 
 module.exports = router;

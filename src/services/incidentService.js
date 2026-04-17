@@ -340,6 +340,18 @@ class IncidentService {
   }
 
   /**
+   * Get incident statistics (raw SQL aggregations)
+   */
+  async getIncidentStats() {
+    try {
+      const stats = await incidentRepository.getIncidentStats();
+      return { success: true, data: stats };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Delete incident
    */
   async deleteIncident(incidentId) {
