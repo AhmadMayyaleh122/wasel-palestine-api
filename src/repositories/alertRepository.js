@@ -68,6 +68,40 @@ class AlertRepository {
       throw new Error(`Failed to fetch user subscriptions: ${error.message}`);
     }
   }
+
+  async findMatchingSubscriptions({ categoryId, geofenceId }) {
+    const prisma = getPrismaClient();
+    try {
+      return await prisma.alertSubscription.findMany({
+        where: {
+          isActive: true,
+          OR: [
+            ...(categoryId ? [{ categoryId }] : []),
+            ...(geofenceId ? [{ geofenceId }] : []),
+          ],
+        },
+      });
+    } catch (error) {
+      throw new Error(`Failed to find matching subscriptions: ${error.message}`);
+    }
+  }
+
+  async createAlertRecords({ subscriptions, incidentId, title, message }) {
+    const prisma = getPrismaClient();
+    try {
+      return await prisma.alertRecord.createMany({
+        data: subscriptions.map((sub) => ({
+          subscriptionId: sub.id,
+          incidentId,
+          title,
+          message,
+          status: 'generated',
+        })),
+      });
+    } catch (error) {
+      throw new Error(`Failed to create alert records: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new AlertRepository();

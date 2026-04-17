@@ -85,6 +85,11 @@ const login = async (email, password) => {
   }
 
   const user = userResult.rows[0];
+
+  if (!user.is_active) {
+    throw new Error('Account is deactivated');
+  }
+
   const isPasswordValid = await comparePassword(password, user.password_hash);
 
   if (!isPasswordValid) {
@@ -167,7 +172,15 @@ const getCurrentUser = async (userId) => {
     throw new Error('User not found');
   }
 
-  return userResult.rows[0];
+  const user = userResult.rows[0];
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.full_name,
+    phone: user.phone,
+    role: user.role,
+    createdAt: user.created_at,
+  };
 };
 
 

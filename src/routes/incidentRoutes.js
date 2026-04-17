@@ -14,6 +14,8 @@ const incidentStaffRoles = ['admin', 'moderator'];
 router.get('/', incidentController.getAllIncidents);
 router.get('/stats', incidentController.getIncidentStats);
 router.get('/high-severity', incidentController.getHighSeverityIncidents);
+router.get('/by-checkpoint/:checkpointId', incidentController.getIncidentsByCheckpoint);
+router.get('/by-category/:categoryId', incidentController.getIncidentsByCategory);
 router.get('/:id', incidentController.getIncidentById);
 
 // Crowdsourced reporting: any authenticated user can submit an incident.
@@ -30,9 +32,5 @@ router.delete('/:id', authMiddleware, roleMiddleware(incidentStaffRoles), incide
 // Moderated actions (admin/moderator only)
 router.post('/:id/verify', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.verifyIncident);
 router.post('/:id/close', authMiddleware, roleMiddleware(incidentStaffRoles), incidentController.closeIncident);
-
-// Filter routes
-router.get('/by-checkpoint/:checkpointId', incidentController.getIncidentsByCheckpoint);
-router.get('/by-category/:categoryId', incidentController.getIncidentsByCategory);
 
 module.exports = router;

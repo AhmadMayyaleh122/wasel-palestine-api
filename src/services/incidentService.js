@@ -1,4 +1,5 @@
 const incidentRepository = require('../repositories/incidentRepository');
+const alertRepository = require('../repositories/alertRepository');
 const { getPrismaClient } = require('../prisma/prismaClient');
 
 class IncidentService {
@@ -188,6 +189,24 @@ class IncidentService {
       await incidentRepository.getIncidentById(incidentId);
 
       const incident = await incidentRepository.verifyIncident(incidentId, userId, notes);
+
+      // Trigger alerts for matching subscriptions
+      try {
+        const subscriptions = await alertRepository.findMatchingSubscriptions({
+          categoryId: incident.categoryId,
+          geofenceId: null,
+        });
+        if (subscriptions.length > 0) {
+          await alertRepository.createAlertRecords({
+            subscriptions,
+            incidentId: incident.id,
+            title: `New verified incident: ${incident.title}`,
+            message: incident.description,
+          });
+        }
+      } catch (alertError) {
+        console.error('Alert triggering failed:', alertError);
+      }
 
       return {
         success: true,
