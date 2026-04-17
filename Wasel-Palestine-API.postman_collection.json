@@ -1,408 +1,190 @@
 {
   "info": {
     "name": "Wasel Palestine API",
-    "description": "Smart Mobility & Checkpoint Intelligence Platform. Use citizen credentials for public/authenticated user flows and staff credentials for moderator/admin-only routes.",
+    "description": "Smart Mobility & Checkpoint Intelligence Platform — Full test collection with role-based tokens",
+    "_postman_id": "wasel-palestine-v2",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "citizenToken", "value": "", "type": "string" },
+    { "key": "adminToken", "value": "", "type": "string" },
+    { "key": "modToken", "value": "", "type": "string" },
+    { "key": "refreshToken", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "checkpointId", "value": "", "type": "string" },
+    { "key": "incidentId", "value": "", "type": "string" },
+    { "key": "reportId", "value": "", "type": "string" },
+    { "key": "subscriptionId", "value": "", "type": "string" }
+  ],
   "item": [
     {
       "name": "Health",
       "item": [
         {
-          "name": "GET - Health Check",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Health check returns 200', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "pm.test('Health payload is valid', function () {",
-                  "  pm.expect(response.status).to.eql('OK');",
-                  "  pm.expect(response.version).to.eql('v1');",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/health",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "health"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Health Check",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is OK', () => pm.expect(pm.response.json().status).to.equal('OK'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
         }
       ]
     },
     {
-      "name": "Authentication",
+      "name": "Auth",
       "item": [
         {
-          "name": "POST - Register Citizen",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Register returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.accessToken) {",
-                  "  pm.environment.set('accessToken', response.data.accessToken);",
-                  "  pm.environment.set('refreshToken', response.data.refreshToken);",
-                  "  pm.environment.set('userId', response.data.user.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Register — Citizen",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.accessToken) {",
+            "  pm.collectionVariables.set('citizenToken', json.data.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+            "  pm.collectionVariables.set('userId', json.data.user.id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has accessToken', () => pm.expect(json.data.accessToken).to.be.a('string'));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"testuser01@example.com\",\n  \"password\": \"password123\",\n  \"fullName\": \"Test User 01\",\n  \"phone\": \"+1234567890\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/register",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "register"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"citizen@test.com\",\n  \"password\": \"Test1234!\",\n  \"fullName\": \"Test Citizen\",\n  \"phone\": \"+970599000001\"\n}" }
+          }
         },
         {
-          "name": "POST - Login Citizen",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Citizen login returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.accessToken) {",
-                  "  pm.environment.set('accessToken', response.data.accessToken);",
-                  "  pm.environment.set('refreshToken', response.data.refreshToken);",
-                  "  pm.environment.set('userId', response.data.user.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Register — Duplicate Email (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 for duplicate email', () => pm.response.to.have.status(400));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"testuser01@example.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/login",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"citizen@test.com\",\n  \"password\": \"Test1234!\",\n  \"fullName\": \"Test Citizen\",\n  \"phone\": \"+970599000001\"\n}" }
+          }
         },
         {
-          "name": "POST - Login Staff",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Staff login returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.accessToken) {",
-                  "  pm.environment.set('staffAccessToken', response.data.accessToken);",
-                  "  pm.environment.set('staffRefreshToken', response.data.refreshToken);",
-                  "  pm.environment.set('staffUserId', response.data.user.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Login — Citizen → saves citizenToken",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.accessToken) {",
+            "  pm.collectionVariables.set('citizenToken', json.data.accessToken);",
+            "  pm.collectionVariables.set('refreshToken', json.data.refreshToken);",
+            "  pm.collectionVariables.set('userId', json.data.user.id);",
+            "}",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Role is citizen', () => pm.expect(json.data.user.role).to.equal('citizen'));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"moderator@example.com\",\n  \"password\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/login",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "login"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"citizen@test.com\",\n  \"password\": \"Test1234!\"\n}" }
+          }
         },
         {
-          "name": "GET - Current Citizen User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Current citizen user returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ],
+          "name": "Login — Admin → saves adminToken",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.accessToken) {",
+            "  pm.collectionVariables.set('adminToken', json.data.accessToken);",
+            "}",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Role is admin', () => pm.expect(json.data.user.role).to.equal('admin'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@wasel.com\",\n  \"password\": \"Admin@1234\"\n}" }
+          }
+        },
+        {
+          "name": "Login — Moderator → saves modToken",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.accessToken) {",
+            "  pm.collectionVariables.set('modToken', json.data.accessToken);",
+            "}",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Role is moderator', () => pm.expect(json.data.user.role).to.equal('moderator'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"mod@wasel.com\",\n  \"password\": \"Mod@1234\"\n}" }
+          }
+        },
+        {
+          "name": "Login — Wrong Password (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 for wrong password', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"citizen@test.com\",\n  \"password\": \"WrongPassword\"\n}" }
+          }
+        },
+        {
+          "name": "Get Current User — Citizen (me)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has fullName in camelCase', () => pm.expect(json.data.fullName).to.be.a('string'));",
+            "pm.test('No snake_case full_name', () => pm.expect(json.data.full_name).to.be.undefined);"
+          ]}}],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/me",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "me"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
         },
         {
-          "name": "GET - Current Staff User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Current staff user returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/me",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "me"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Get Me — No Token (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/auth/me" }
         },
         {
-          "name": "POST - Refresh Citizen Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Refresh citizen token returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.accessToken) {",
-                  "  pm.environment.set('accessToken', response.data.accessToken);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Refresh Token",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.accessToken) {",
+            "  pm.collectionVariables.set('citizenToken', json.data.accessToken);",
+            "}",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('New accessToken received', () => pm.expect(json.data.accessToken).to.be.a('string'));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/refresh",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "refresh"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/auth/refresh",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
         },
         {
-          "name": "POST - Refresh Staff Token",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Refresh staff token returns success', function () {",
-                  "  pm.response.to.have.status(200);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.accessToken) {",
-                  "  pm.environment.set('staffAccessToken', response.data.accessToken);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Logout — Citizen",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{staffRefreshToken}}\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/refresh",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "refresh"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "POST - Logout Citizen",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/auth/logout",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "auth",
-                "logout"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/auth/logout",
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" }
+          }
         }
       ]
     },
@@ -410,254 +192,158 @@
       "name": "Checkpoints",
       "item": [
         {
-          "name": "GET - List All Checkpoints",
+          "name": "List All Checkpoints (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/checkpoints" }
+        },
+        {
+          "name": "List Checkpoints — Filter by Status + Pagination (Public)",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints?page=1&limit=20",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints"
-              ],
+              "raw": "{{baseUrl}}/checkpoints?status=open&page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["checkpoints"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
+                { "key": "status", "value": "open" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "GET - Single Checkpoint",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "{{checkpointId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "GET - Checkpoint Status History",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}/status-history?limit=50",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "{{checkpointId}}",
-                "status-history"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "50"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "GET - Checkpoints By Area",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/areas/{{areaId}}/checkpoints",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "areas",
-                "{{areaId}}",
-                "checkpoints"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "POST - Create Checkpoint (Staff)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Create checkpoint returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.id) {",
-                  "  pm.environment.set('checkpointId', response.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Create Checkpoint — Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.id) {",
+            "  pm.collectionVariables.set('checkpointId', json.data.id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Test Checkpoint\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028,\n  \"addressText\": \"Test Road\",\n  \"directionHint\": \"North\",\n  \"currentStatus\": \"open\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/checkpoints",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Qalandia Checkpoint\",\n  \"latitude\": 31.8609,\n  \"longitude\": 35.2184,\n  \"addressText\": \"Qalandia, West Bank\",\n  \"directionHint\": \"Main entrance from Ramallah\",\n  \"currentStatus\": \"open\",\n  \"externalCode\": \"CP-QLD-001\"\n}" }
+          }
         },
         {
-          "name": "PUT - Update Checkpoint Details (Staff)",
+          "name": "Create Checkpoint — Moderator",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{modToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/checkpoints",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Huwwara Checkpoint\",\n  \"latitude\": 32.1294,\n  \"longitude\": 35.2771,\n  \"addressText\": \"Huwwara, Nablus\",\n  \"currentStatus\": \"open\"\n}" }
+          }
+        },
+        {
+          "name": "Create Checkpoint — Citizen (expect 400 Forbidden)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Citizen cannot create checkpoint', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/checkpoints",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Fake Checkpoint\",\n  \"latitude\": 31.9,\n  \"longitude\": 35.2\n}" }
+          }
+        },
+        {
+          "name": "Get Checkpoint by ID (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/checkpoints/{{checkpointId}}" }
+        },
+        {
+          "name": "Get Checkpoint Status History (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/checkpoints/{{checkpointId}}/status-history" }
+        },
+        {
+          "name": "Get Checkpoints by Area (Public)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/checkpoints/areas/AREA_ID_HERE/checkpoints" }
+        },
+        {
+          "name": "Update Checkpoint Status — Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Checkpoint\",\n  \"addressText\": \"Updated Road\",\n  \"directionHint\": \"Northeast\",\n  \"isActive\": true\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "{{checkpointId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/checkpoints/{{checkpointId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"delayed\",\n  \"notes\": \"Heavy traffic due to military convoy\"\n}" }
+          }
         },
         {
-          "name": "PUT - Update Checkpoint Status (Staff)",
+          "name": "Update Checkpoint Status — Moderator",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{modToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"delayed\",\n  \"notes\": \"Heavy traffic\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}/status",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "{{checkpointId}}",
-                "status"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/checkpoints/{{checkpointId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"open\",\n  \"notes\": \"Traffic cleared\"\n}" }
+          }
         },
         {
-          "name": "DELETE - Deactivate Checkpoint (Admin)",
+          "name": "Update Checkpoint Status — Invalid Value (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 for invalid status', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/checkpoints/{{checkpointId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"on_fire\"\n}" }
+          }
+        },
+        {
+          "name": "Update Checkpoint Details — Admin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/checkpoints/{{checkpointId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Qalandia Checkpoint (Updated)\",\n  \"directionHint\": \"North entrance only\"\n}" }
+          }
+        },
+        {
+          "name": "Deactivate Checkpoint — Admin only",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:3000/api/v1/checkpoints/{{checkpointId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "checkpoints",
-                "{{checkpointId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/checkpoints/{{checkpointId}}"
+          }
         }
       ]
     },
@@ -665,491 +351,355 @@
       "name": "Incidents",
       "item": [
         {
-          "name": "GET - List All Incidents",
+          "name": "List All Incidents (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents" }
+        },
+        {
+          "name": "List Incidents — Filter Severity + Status + Pagination (Public)",
           "request": {
             "method": "GET",
             "url": {
-              "raw": "http://localhost:3000/api/v1/incidents?page=1&limit=20&status=reported",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents"
-              ],
+              "raw": "{{baseUrl}}/incidents?severity=high&status=verified&page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["incidents"],
               "query": [
-                {
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "key": "limit",
-                  "value": "20"
-                },
-                {
-                  "key": "status",
-                  "value": "reported"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
+                { "key": "severity", "value": "high" },
+                { "key": "status", "value": "verified" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
-          "name": "GET - High Severity Incidents",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/high-severity?limit=50",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "high-severity"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "50"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Get Incident Stats — Raw SQL (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has totals', () => pm.expect(json.data.totals).to.be.an('object'));",
+            "pm.test('Has bySeverity', () => pm.expect(json.data.bySeverity).to.be.an('array'));",
+            "pm.test('Has byStatus', () => pm.expect(json.data.byStatus).to.be.an('array'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents/stats" }
         },
         {
-          "name": "GET - Single Incident",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Get High Severity Incidents (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents/high-severity" }
         },
         {
-          "name": "GET - Incidents By Checkpoint",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/checkpoints/{{checkpointId}}/incidents?limit=20",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "checkpoints",
-                "{{checkpointId}}",
-                "incidents"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Get Incidents by Checkpoint (Public)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents/by-checkpoint/{{checkpointId}}" }
         },
         {
-          "name": "GET - Incidents By Category",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/categories/{{categoryId}}/incidents?limit=20",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "categories",
-                "{{categoryId}}",
-                "incidents"
-              ],
-              "query": [
-                {
-                  "key": "limit",
-                  "value": "20"
-                }
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+          "name": "Get Incidents by Category (Public)",
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents/by-category/1" }
         },
         {
-          "name": "POST - Create Incident",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Create incident returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.id) {",
-                  "  pm.environment.set('incidentId', response.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Create Incident — Citizen (status: reported)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.id) {",
+            "  pm.collectionVariables.set('incidentId', json.data.id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Citizen incident status is reported', () => pm.expect(json.data.status).to.equal('reported'));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Traffic Jam at Main Road\",\n  \"description\": \"Heavy traffic causing 30 min delay\",\n  \"categoryId\": {{categoryId}},\n  \"checkpointId\": \"{{checkpointId}}\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028,\n  \"severity\": \"high\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/incidents",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Road blocked near Qalandia\",\n  \"description\": \"Military checkpoint blocking road since morning, long queues forming\",\n  \"categoryId\": 1,\n  \"latitude\": 31.8609,\n  \"longitude\": 35.2184,\n  \"severity\": \"high\"\n}" }
+          }
         },
         {
-          "name": "PUT - Update Incident Details (Staff)",
+          "name": "Create Incident — Admin (status: verified auto)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Admin incident status is verified', () => pm.expect(json.data.status).to.equal('verified'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/incidents",
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Full closure at Huwwara\",\n  \"description\": \"Complete military closure, no vehicles allowed\",\n  \"categoryId\": 1,\n  \"latitude\": 32.1294,\n  \"longitude\": 35.2771,\n  \"severity\": \"critical\"\n}" }
+          }
+        },
+        {
+          "name": "Get Incident by ID (Public)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/incidents/{{incidentId}}" }
+        },
+        {
+          "name": "Verify Incident — Admin (triggers AlertRecords)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is verified', () => pm.expect(json.data.status).to.equal('verified'));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/incidents/{{incidentId}}/verify",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Confirmed by patrol team on the ground\"\n}" }
+          }
+        },
+        {
+          "name": "Verify Incident — Moderator",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{modToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/incidents/{{incidentId}}/verify",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Confirmed by moderator\"\n}" }
+          }
+        },
+        {
+          "name": "Verify Incident — Citizen (expect 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 403 — citizen cannot verify', () => pm.response.to.have.status(403));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/incidents/{{incidentId}}/verify",
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Update Incident Status — Admin",
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"Updated incident description\",\n  \"severity\": \"critical\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/incidents/{{incidentId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"monitoring\",\n  \"notes\": \"Situation under observation\"\n}" }
+          }
         },
         {
-          "name": "PUT - Update Incident Status (Staff)",
+          "name": "Update Incident Details — Moderator",
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{modToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"monitoring\",\n  \"notes\": \"Monitoring ongoing traffic disruption\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}/status",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}",
-                "status"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/incidents/{{incidentId}}",
+            "body": { "mode": "raw", "raw": "{\n  \"severity\": \"critical\",\n  \"description\": \"Updated: full road closure confirmed, no vehicles passing\"\n}" }
+          }
         },
         {
-          "name": "POST - Verify Incident (Staff)",
+          "name": "Close Incident — Admin",
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"notes\": \"Verified incident condition\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}/verify",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}",
-                "verify"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/incidents/{{incidentId}}/close",
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Road cleared, situation fully resolved\"\n}" }
+          }
         },
         {
-          "name": "POST - Close Incident (Staff)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"notes\": \"Issue resolved\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}/close",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}",
-                "close"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "DELETE - Incident (Staff)",
+          "name": "Delete Incident — Admin only",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              }
-            ],
-            "url": {
-              "raw": "http://localhost:3000/api/v1/incidents/{{incidentId}}",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "incidents",
-                "{{incidentId}}"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/incidents/{{incidentId}}"
+          }
         }
       ]
     },
     {
-      "name": "Reports",
+      "name": "Reports (Crowdsourced)",
       "item": [
         {
-          "name": "POST - Create Report",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Create report returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.id) {",
-                  "  pm.environment.set('reportId', response.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Submit Report — Citizen",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.id) {",
+            "  pm.collectionVariables.set('reportId', json.data.id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Status is submitted', () => pm.expect(json.data.status).to.equal('submitted'));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryId\": {{categoryId}},\n  \"description\": \"Crowdsourced report for testing report flow\",\n  \"latitude\": 31.9454,\n  \"longitude\": 35.2028\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/reports",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "reports"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/reports",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"description\": \"Long queue at Qalandia checkpoint, more than 2 hours wait time\",\n  \"latitude\": 31.8609,\n  \"longitude\": 35.2184\n}" }
+          }
         },
         {
-          "name": "POST - Vote On Report",
+          "name": "Submit Duplicate Report — Citizen (same area)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('duplicateOfReportId is set', () => pm.expect(json.data.duplicateOfReportId).to.not.be.null);"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"voteType\": \"confirm\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/reports/{{reportId}}/vote",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "reports",
-                "{{reportId}}",
-                "vote"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/reports",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"description\": \"Same checkpoint still very crowded, cars backed up 1km\",\n  \"latitude\": 31.8610,\n  \"longitude\": 35.2185\n}" }
+          }
         },
         {
-          "name": "PUT - Update Report Status (Staff)",
+          "name": "Vote on Report — Citizen (confirm)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/reports/{{reportId}}/vote",
+            "body": { "mode": "raw", "raw": "{\n  \"voteType\": \"confirm\"\n}" }
+          }
+        },
+        {
+          "name": "Vote Twice — Same Citizen (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 — already voted', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/reports/{{reportId}}/vote",
+            "body": { "mode": "raw", "raw": "{\n  \"voteType\": \"deny\"\n}" }
+          }
+        },
+        {
+          "name": "List All Reports — Admin (with pagination)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has pagination metadata', () => {",
+            "  pm.expect(json.data.total).to.be.a('number');",
+            "  pm.expect(json.data.totalPages).to.be.a('number');",
+            "  pm.expect(json.data.reports).to.be.an('array');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports?page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["reports"],
+              "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "List Reports — Moderator (filter by status)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{modToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports?status=submitted&page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["reports"],
+              "query": [
+                { "key": "status", "value": "submitted" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Reports — Citizen (expect 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 403 — citizen cannot list all reports', () => pm.response.to.have.status(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": "{{baseUrl}}/reports"
+          }
+        },
+        {
+          "name": "Get Report by ID — Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/reports/{{reportId}}"
+          }
+        },
+        {
+          "name": "Update Report Status — under_review (Moderator)",
           "request": {
             "method": "PUT",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{staffAccessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{modToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"verified\",\n  \"notes\": \"Validated by moderator during API test\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/reports/{{reportId}}/status",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "reports",
-                "{{reportId}}",
-                "status"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/reports/{{reportId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"under_review\",\n  \"notes\": \"Checking with field team\"\n}" }
+          }
+        },
+        {
+          "name": "Update Report Status — verified (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/reports/{{reportId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"verified\",\n  \"notes\": \"Confirmed by multiple sources\"\n}" }
+          }
+        },
+        {
+          "name": "Update Report Status — spam (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/reports/{{reportId}}/status",
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"spam\",\n  \"notes\": \"Repeated fake submission\"\n}" }
+          }
         }
       ]
     },
@@ -1157,226 +707,187 @@
       "name": "Route Estimation",
       "item": [
         {
-          "name": "POST - Estimate Route",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Route estimation returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.id) {",
-                  "  pm.environment.set('routeEstimationId', response.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
+          "name": "Estimate Route — Basic Citizen (heuristic fallback)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has baseDistanceKm', () => pm.expect(json.data.baseDistanceKm).to.exist);",
+            "pm.test('Has riskScore', () => pm.expect(json.data.riskScore).to.exist);",
+            "pm.test('Has factors array', () => pm.expect(json.data.factors).to.be.an('array'));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"originName\": \"Ramallah\",\n  \"originLatitude\": 31.9038,\n  \"originLongitude\": 35.2034,\n  \"destinationName\": \"Jerusalem\",\n  \"destinationLatitude\": 31.7683,\n  \"destinationLongitude\": 35.2137,\n  \"avoidCheckpoints\": false,\n  \"avoidAreas\": []\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/routes/estimate",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "routes",
-                "estimate"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Alerts",
-      "item": [
-        {
-          "name": "POST - Create Alert Subscription",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Create alert subscription returns success', function () {",
-                  "  pm.response.to.have.status(201);",
-                  "});",
-                  "var response = pm.response.json();",
-                  "if (response.data && response.data.id) {",
-                  "  pm.environment.set('alertSubscriptionId', response.data.id);",
-                  "}"
-                ]
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"categoryId\": {{categoryId}},\n  \"channel\": \"in_app\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/v1/alerts/subscriptions",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "alerts",
-                "subscriptions"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/routes/estimate",
+            "body": { "mode": "raw", "raw": "{\n  \"originName\": \"Ramallah City Center\",\n  \"originLatitude\": 31.9038,\n  \"originLongitude\": 35.2034,\n  \"destinationName\": \"Jerusalem Old City\",\n  \"destinationLatitude\": 31.7767,\n  \"destinationLongitude\": 35.2345\n}" }
+          }
         },
         {
-          "name": "GET - My Alert Subscriptions",
+          "name": "Estimate Route — Admin (Avoid Checkpoints + Areas)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has user_constraint factor', () => {",
+            "  const has = json.data.factors.some(f => f.factorType === 'user_constraint');",
+            "  pm.expect(has).to.be.true;",
+            "});"
+          ]}}],
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}"
-              }
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
             ],
-            "url": {
-              "raw": "http://localhost:3000/api/v1/alerts/subscriptions",
-              "host": [
-                "localhost"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "alerts",
-                "subscriptions"
-              ],
-              "protocol": "http",
-              "port": "3000"
-            }
-          },
-          "response": []
+            "url": "{{baseUrl}}/routes/estimate",
+            "body": { "mode": "raw", "raw": "{\n  \"originName\": \"Ramallah\",\n  \"originLatitude\": 31.9038,\n  \"originLongitude\": 35.2034,\n  \"destinationName\": \"Bethlehem\",\n  \"destinationLatitude\": 31.7054,\n  \"destinationLongitude\": 35.2024,\n  \"avoidCheckpoints\": true,\n  \"avoidAreas\": [\"zone-a\", \"zone-b\"]\n}" }
+          }
+        },
+        {
+          "name": "Estimate Route — Missing Coords (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 for missing coordinates', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/routes/estimate",
+            "body": { "mode": "raw", "raw": "{\n  \"originName\": \"Ramallah\"\n}" }
+          }
+        },
+        {
+          "name": "Estimate Route — No Auth (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/routes/estimate",
+            "body": { "mode": "raw", "raw": "{\n  \"originLatitude\": 31.9038,\n  \"originLongitude\": 35.2034,\n  \"destinationLatitude\": 31.7767,\n  \"destinationLongitude\": 35.2345\n}" }
+          }
         }
       ]
-    }
-  ],
-  "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:3000/api/v1"
     },
     {
-      "key": "citizenEmail",
-      "value": "test@example.com"
-    },
-    {
-      "key": "citizenPassword",
-      "value": "password123"
-    },
-    {
-      "key": "citizenFullName",
-      "value": "Test User"
-    },
-    {
-      "key": "citizenPhone",
-      "value": "+1234567890"
-    },
-    {
-      "key": "staffEmail",
-      "value": "moderator@example.com"
-    },
-    {
-      "key": "staffPassword",
-      "value": "password123"
-    },
-    {
-      "key": "categoryId",
-      "value": "1"
-    },
-    {
-      "key": "areaId",
-      "value": ""
-    },
-    {
-      "key": "geofenceId",
-      "value": ""
-    },
-    {
-      "key": "accessToken",
-      "value": ""
-    },
-    {
-      "key": "refreshToken",
-      "value": ""
-    },
-    {
-      "key": "staffAccessToken",
-      "value": ""
-    },
-    {
-      "key": "staffRefreshToken",
-      "value": ""
-    },
-    {
-      "key": "userId",
-      "value": ""
-    },
-    {
-      "key": "staffUserId",
-      "value": ""
-    },
-    {
-      "key": "checkpointId",
-      "value": ""
-    },
-    {
-      "key": "incidentId",
-      "value": ""
-    },
-    {
-      "key": "reportId",
-      "value": ""
-    },
-    {
-      "key": "routeEstimationId",
-      "value": ""
-    },
-    {
-      "key": "alertSubscriptionId",
-      "value": ""
+      "name": "Alerts & Subscriptions",
+      "item": [
+        {
+          "name": "Create Subscription — Citizen (by Category, in_app)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.id) {",
+            "  pm.collectionVariables.set('subscriptionId', json.data.id);",
+            "}",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/alerts/subscriptions",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"channel\": \"in_app\"\n}" }
+          }
+        },
+        {
+          "name": "Create Subscription — Admin (by Category, push)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/alerts/subscriptions",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"channel\": \"push\"\n}" }
+          }
+        },
+        {
+          "name": "Create Subscription — Duplicate (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 for duplicate subscription', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/alerts/subscriptions",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"channel\": \"in_app\"\n}" }
+          }
+        },
+        {
+          "name": "Create Subscription — No Filter (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 — at least one filter required', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/alerts/subscriptions",
+            "body": { "mode": "raw", "raw": "{\n  \"channel\": \"in_app\"\n}" }
+          }
+        },
+        {
+          "name": "Create Subscription — Invalid Channel (expect 400)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 for invalid channel', () => pm.response.to.have.status(400));"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{citizenToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/alerts/subscriptions",
+            "body": { "mode": "raw", "raw": "{\n  \"categoryId\": 1,\n  \"channel\": \"telegram\"\n}" }
+          }
+        },
+        {
+          "name": "Get My Subscriptions — Citizen",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Returns array', () => pm.expect(json.data).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": "{{baseUrl}}/alerts/subscriptions"
+          }
+        },
+        {
+          "name": "Get My Subscriptions — Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/alerts/subscriptions"
+          }
+        },
+        {
+          "name": "Get Subscriptions — No Auth (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/alerts/subscriptions" }
+        }
+      ]
     }
   ]
 }
