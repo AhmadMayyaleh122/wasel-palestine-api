@@ -1,6 +1,59 @@
 const { getPrismaClient } = require('../prisma/prismaClient');
+const pool = require('../db/database');
 
 class IncidentRepository {
+  /**
+   * Raw SQL: aggregate incident statistics by severity, status, and category.
+   * Demonstrates raw query capability alongside Prisma ORM.
+   */
+  async getIncidentStats() {
+    const bySeverityQuery = `
+      SELECT severity, COUNT(*)::int AS count
+      FROM incidents
+      GROUP BY severity
+      ORDER BY count DESC
+    `;
+
+    const byStatusQuery = `
+      SELECT status, COUNT(*)::int AS count
+      FROM incidents
+      GROUP BY status
+      ORDER BY count DESC
+    `;
+
+    const byCategoryQuery = `
+      SELECT ic.label AS category, ic.code, COUNT(i.id)::int AS count
+      FROM incident_categories ic
+      LEFT JOIN incidents i ON i.category_id = ic.id
+      GROUP BY ic.id, ic.label, ic.code
+      ORDER BY count DESC
+    `;
+
+    const totalsQuery = `
+      SELECT
+        COUNT(*)::int AS total,
+        COUNT(*) FILTER (WHERE status = 'verified')::int AS verified,
+        COUNT(*) FILTER (WHERE status = 'reported')::int AS reported,
+        COUNT(*) FILTER (WHERE severity IN ('high', 'critical'))::int AS high_severity_active,
+        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '24 hours')::int AS last_24h
+      FROM incidents
+    `;
+
+    const [severityResult, statusResult, categoryResult, totalsResult] = await Promise.all([
+      pool.query(bySeverityQuery),
+      pool.query(byStatusQuery),
+      pool.query(byCategoryQuery),
+      pool.query(totalsQuery),
+    ]);
+
+    return {
+      totals: totalsResult.rows[0],
+      bySeverity: severityResult.rows,
+      byStatus: statusResult.rows,
+      byCategory: categoryResult.rows,
+    };
+  }
+
   /**
    * Get all incidents with filters, sorting, and pagination
    */

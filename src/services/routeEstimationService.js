@@ -1,5 +1,36 @@
 const routeEstimationRepository = require('../repositories/routeEstimationRepository');
 
+// In-memory cache for external API responses
+const cache = new Map();
+const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const ORS_CACHE_TTL_MS = 5 * 60 * 1000;      // 5 minutes
+const EXTERNAL_API_TIMEOUT_MS = 10000;         // 10 seconds
+
+function getCached(key) {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCache(key, value, ttl) {
+  cache.set(key, { value, expiresAt: Date.now() + ttl });
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = EXTERNAL_API_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 class RouteEstimationService {
   toRadians(degrees) {
     return (degrees * Math.PI) / 180;
@@ -115,6 +146,12 @@ class RouteEstimationService {
       return null;
     }
 
+    const cacheKey = `ors:${originLatitude},${originLongitude}->${destinationLatitude},${destinationLongitude}:avoid_cp=${Boolean(avoidCheckpoints)}:areas=${JSON.stringify(avoidAreas || [])}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const url = 'https://api.openrouteservice.org/v2/directions/driving-car/geojson';
 
     const body = {
@@ -130,7 +167,7 @@ class RouteEstimationService {
     }
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         method: 'POST',
         headers: {
           Authorization: apiKey,
@@ -185,7 +222,7 @@ class RouteEstimationService {
         });
       }
 
-      return {
+      const result = {
         providerName: 'openrouteservice',
         baseDistanceKm,
         adjustedDistanceKm,
@@ -204,8 +241,15 @@ class RouteEstimationService {
         },
         factors,
       };
+
+      setCache(cacheKey, result, ORS_CACHE_TTL_MS);
+      return result;
     } catch (error) {
-      console.error('ORS integration failed, falling back to heuristic:', error.message);
+      if (error.name === 'AbortError') {
+        console.error('ORS request timed out, falling back to heuristic');
+      } else {
+        console.error('ORS integration failed, falling back to heuristic:', error.message);
+      }
       return null;
     }
   }
@@ -216,11 +260,20 @@ class RouteEstimationService {
       return null;
     }
 
+    // Round coordinates to 2 decimal places for cache key (~1km precision)
+    const roundedLat = Math.round(latitude * 100) / 100;
+    const roundedLon = Math.round(longitude * 100) / 100;
+    const cacheKey = `weather:${roundedLat},${roundedLon}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const url =
       `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${apiKey}&units=metric`;
 
     try {
-      const response = await fetch(url);
+      const response = await fetchWithTimeout(url);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -258,7 +311,7 @@ class RouteEstimationService {
         description += `, elevated wind speed (${windSpeed} m/s)`;
       }
 
-      return {
+      const weatherResult = {
         provider: 'openweathermap',
         durationPenalty,
         riskPenalty,
@@ -277,8 +330,15 @@ class RouteEstimationService {
           raw: data,
         },
       };
+
+      setCache(cacheKey, weatherResult, WEATHER_CACHE_TTL_MS);
+      return weatherResult;
     } catch (error) {
-      console.error('OpenWeather integration failed, continuing without weather factor:', error.message);
+      if (error.name === 'AbortError') {
+        console.error('OpenWeather request timed out, continuing without weather factor');
+      } else {
+        console.error('OpenWeather integration failed, continuing without weather factor:', error.message);
+      }
       return null;
     }
   }

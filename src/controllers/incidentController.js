@@ -352,6 +352,29 @@ class IncidentController {
   }
 
   /**
+   * GET /api/v1/incidents/stats
+   * Incident statistics using raw SQL aggregations
+   */
+  async getIncidentStats(_req, res) {
+    try {
+      const result = await incidentService.getIncidentStats();
+
+      if (!result.success) {
+        return res.status(400).json({ status: 'error', message: result.error });
+      }
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'Incident statistics retrieved successfully',
+        data: result.data,
+      });
+    } catch (error) {
+      console.error('Error fetching incident stats:', error);
+      return res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+  }
+
+  /**
    * DELETE /api/v1/incidents/:id
    * Delete incident
    */
