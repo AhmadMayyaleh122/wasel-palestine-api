@@ -15,7 +15,8 @@
     { "key": "checkpointId", "value": "", "type": "string" },
     { "key": "incidentId", "value": "", "type": "string" },
     { "key": "reportId", "value": "", "type": "string" },
-    { "key": "subscriptionId", "value": "", "type": "string" }
+    { "key": "subscriptionId", "value": "", "type": "string" },
+    { "key": "alertId", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -886,6 +887,88 @@
             "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
           ]}}],
           "request": { "method": "GET", "url": "{{baseUrl}}/alerts/subscriptions" }
+        },
+        {
+          "name": "Get My Alerts — Citizen (with pagination)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "if (json.data && json.data.alerts && json.data.alerts.length > 0) {",
+            "  pm.collectionVariables.set('alertId', json.data.alerts[0].id);",
+            "}",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has alerts array', () => pm.expect(json.data.alerts).to.be.an('array'));",
+            "pm.test('Has pagination metadata', () => {",
+            "  pm.expect(json.data.total).to.be.a('number');",
+            "  pm.expect(json.data.totalPages).to.be.a('number');",
+            "  pm.expect(json.data.page).to.be.a('number');",
+            "  pm.expect(json.data.limit).to.be.a('number');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?page=1&limit=10",
+              "host": ["{{baseUrl}}"], "path": ["alerts"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Alerts — Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }],
+            "url": "{{baseUrl}}/alerts"
+          }
+        },
+        {
+          "name": "Get My Alerts — No Auth (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/alerts" }
+        },
+        {
+          "name": "Mark Alert as Read — Citizen",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const json = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is read', () => pm.expect(json.data.status).to.equal('read'));",
+            "pm.test('readAt is set', () => pm.expect(json.data.readAt).to.not.be.null);"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": "{{baseUrl}}/alerts/{{alertId}}/read"
+          }
+        },
+        {
+          "name": "Mark Alert as Read — Wrong ID (expect 404)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 for non-existent alert', () => pm.response.to.have.status(404));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{citizenToken}}" }],
+            "url": "{{baseUrl}}/alerts/00000000-0000-0000-0000-000000000000/read"
+          }
+        },
+        {
+          "name": "Mark Alert as Read — No Auth (expect 401)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+          ]}}],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/alerts/{{alertId}}/read"
+          }
         }
       ]
     }
