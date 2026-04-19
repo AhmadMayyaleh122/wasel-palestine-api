@@ -56,6 +56,38 @@ class AlertController {
       });
     }
   }
+
+  async getMyAlerts(req, res) {
+    try {
+      const { page, limit } = req.query;
+      const result = await alertService.getUserAlerts(req.user.id, { page, limit });
+
+      if (!result.success) {
+        return res.status(400).json({ status: 'error', message: result.error });
+      }
+
+      return res.status(200).json({ status: 'success', data: result.data });
+    } catch (error) {
+      console.error('Error fetching user alerts:', error);
+      return res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+  }
+
+  async markAlertAsRead(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await alertService.markAlertAsRead(id, req.user.id);
+
+      if (!result.success) {
+        return res.status(404).json({ status: 'error', message: result.error });
+      }
+
+      return res.status(200).json({ status: 'success', message: 'Alert marked as read', data: result.data });
+    } catch (error) {
+      console.error('Error marking alert as read:', error);
+      return res.status(500).json({ status: 'error', message: 'Internal server error' });
+    }
+  }
 }
 
 module.exports = new AlertController();
