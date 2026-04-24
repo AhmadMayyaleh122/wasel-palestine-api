@@ -152,7 +152,7 @@ class ReportService {
 
       const normalizedStatus = String(status).trim().toLowerCase();
 
-      const allowedStatuses = ['under_review', 'verified', 'rejected', 'spam'];
+      const allowedStatuses = ['under_review', 'verified', 'rejected', 'spam','merged'];
 
       if (!allowedStatuses.includes(normalizedStatus)) {
         throw new Error('Invalid report status');
@@ -183,6 +183,9 @@ class ReportService {
           break;
         case 'spam':
           actionType = 'reject_report';
+          break;
+        case 'merged':
+          actionType = 'merge_report';
           break;
         default:
           throw new Error('Unsupported moderation action type');

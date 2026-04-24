@@ -15,7 +15,7 @@ class RouteEstimationController {
       } = req.body;
 
       const result = await routeEstimationService.createRouteEstimation({
-        userId: req.user?.id || null,
+        userId: req.user.id || null,
         originName,
         originLatitude,
         originLongitude,
