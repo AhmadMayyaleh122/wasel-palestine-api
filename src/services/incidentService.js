@@ -100,6 +100,15 @@ class IncidentService {
         throw new Error('Invalid category ID');
       }
 
+      if(data.checkpointId) {
+        const checkpoint = await prisma.checkpoint.findUnique({
+          where: { id: data.checkpointId },
+        });
+        if (!checkpoint) {
+          throw new Error('Invalid checkpoint ID');
+        }
+      }
+
       // Validate severity if provided
       if (data.severity) {
         const validSeverities = ['low', 'medium', 'high', 'critical'];
@@ -193,9 +202,7 @@ class IncidentService {
       // Trigger alerts for matching subscriptions
       try {
         const subscriptions = await alertRepository.findMatchingSubscriptions({
-          categoryId: incident.categoryId,
-          geofenceId: null,
-        });
+          categoryId: incident.categoryId,        });
         if (subscriptions.length > 0) {
           await alertRepository.createAlertRecords({
             subscriptions,

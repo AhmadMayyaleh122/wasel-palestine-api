@@ -157,6 +157,15 @@ const logout =async (req,res) =>{
   try{
     const userId = req.user.id;
     const refreshToken = req.body.refreshToken;
+
+    if(!refreshToken){
+      return res.status(400).json({
+        status:'error',
+        message:'refresh token is required',
+      });
+
+    }
+
     await authService.logout(userId,refreshToken);
 
     res.status(200).json({
